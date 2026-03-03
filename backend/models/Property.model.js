@@ -42,6 +42,13 @@ const propertySchema = new mongoose.Schema({
     required: true
   },
 
+  rentDueDay:{
+    type:Number,
+    default:5,
+    min:1,
+    max:28
+  },
+
   status: {
     type: String,
     enum: ['AVAILABLE', 'OCCUPIED', 'MAINTENANCE'],

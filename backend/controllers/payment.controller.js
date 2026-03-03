@@ -192,6 +192,12 @@ export const verifyPayment = async (req, res, next) => {
     payment.status = 'SUCCESS'
     payment.razorpayPaymentId = razorpay_payment_id
     payment.razorpaySignature = razorpay_signature
+    if (payment.type === 'RENT') {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  payment.rentMonth = `${year}-${month}`
+}
     await payment.save()
 
     // notify owner

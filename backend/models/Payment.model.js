@@ -42,6 +42,10 @@ const paymentSchema = new mongoose.Schema(
       default: 'CREATED',
       index: true
     },
+    rentMonth:{
+      type:String,
+      index:true
+    },
     razorpayOrderId: {
       type: String,
       index: true
