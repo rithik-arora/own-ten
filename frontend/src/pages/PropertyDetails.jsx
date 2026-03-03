@@ -186,17 +186,87 @@ const PropertyDetails = () => {
           {/* Property Details */}
           <div className="p-6 space-y-4">
             <h1 className="text-2xl md:text-3xl font-bold text-white">{property.address}</h1>
+            {/* Property Status Badge */}
+<div className="mt-2">
+  <span
+    className={`px-3 py-1 text-xs font-medium rounded-full border ${
+      property.status === 'AVAILABLE'
+        ? 'bg-green-600/20 text-green-400 border-green-500/30'
+        : 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30'
+    }`}
+  >
+    {property.status}
+  </span>
+</div>
             <div className="flex items-center gap-2 text-zinc-400">
               <MapPin size={18} className="text-indigo-400" />
               <p>{property.city}, {property.state}</p>
             </div>
             <div className="flex items-center gap-2">
-              <DollarSign size={20} className="text-indigo-400" />
+              
               <p className="text-2xl font-bold text-indigo-400">
                 ₹{property.rentAmount.toLocaleString()}
                 <span className="text-sm font-normal text-zinc-500 ml-1">/month</span>
               </p>
             </div>
+
+            {/* Owner Info */}
+{/* {property.ownerId && (
+  <div className="flex items-center gap-2 text-zinc-400 mt-2">
+    <User size={18} className="text-indigo-400" />
+    <div>
+      <p className="text-sm">Owner</p>
+      <p className="text-white font-medium">
+        {property.ownerId.name}
+      </p>
+    </div>
+  </div>
+)} */}
+
+
+            {/* Owner Info */}
+{property.ownerId && (
+  <div className="mt-4 p-4 bg-zinc-800 rounded-xl border border-zinc-700">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 bg-indigo-500/20 rounded-full flex items-center justify-center">
+        <User size={18} className="text-indigo-400" />
+      </div>
+      <div>
+        <p className="text-xs text-zinc-400 uppercase tracking-wide">
+          Property Owner
+        </p>
+        <p className="text-white font-semibold">
+          {property.ownerId.name}
+        </p>
+        <p className="text-zinc-500 text-sm">
+          {property.ownerId.email}
+        </p>
+      </div>
+    </div>
+  </div>
+)}
+
+            {/* Tenant Info - Visible to Owner */}
+{user?.role === 'OWNER' && property.tenantId && (
+  <div className="mt-4 p-4 bg-zinc-800 rounded-xl border border-zinc-700">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
+        <User size={18} className="text-green-400" />
+      </div>
+      <div>
+        <p className="text-xs text-zinc-400 uppercase tracking-wide">
+          Current Tenant
+        </p>
+        <p className="text-white font-semibold">
+          {property.tenantId.name}
+        </p>
+        <p className="text-zinc-500 text-sm">
+          {property.tenantId.email}
+        </p>
+      </div>
+    </div>
+  </div>
+)}
 
             {/* Tenant Actions */}
             {user?.role === 'TENANT' && isTenantHere && (

@@ -199,22 +199,65 @@ export const removeTenant = async (req, res, next) => {
 /* ======================================================
    LEAVE
 ====================================================== */
+// export const leaveProperty = async (req, res, next) => {
+//   try {
+//     const property = await Property.findById(req.params.id)
+
+//     property.tenantId = null
+//     property.status = 'AVAILABLE'
+//     await property.save()
+
+//     try {
+//       // Invalidate cached property data after tenant leaves
+//       await invalidatePropertyCache()
+//     } catch (cacheErr) {
+//       console.error('Property cache invalidation error (leaveProperty):', cacheErr?.message || cacheErr)
+//     }
+
+//     res.json({ success:true })
+//   } catch (err) {
+//     next(err)
+//   }
+// }
+
+
 export const leaveProperty = async (req, res, next) => {
   try {
     const property = await Property.findById(req.params.id)
 
+    if (!property) {
+      return res.status(404).json({
+        success: false,
+        message: 'Property not found'
+      })
+    }
+
+    // 🔥 1️⃣ Archive all disputes for this property
+    await Dispute.updateMany(
+      {
+        propertyId: property._id,
+        isArchived: { $ne: true }
+      },
+      {
+        $set: { isArchived: true }
+      }
+    )
+
+    // 🔥 2️⃣ Remove tenant
     property.tenantId = null
     property.status = 'AVAILABLE'
+
     await property.save()
 
+    // 🔥 3️⃣ Invalidate cache (your existing logic)
     try {
-      // Invalidate cached property data after tenant leaves
       await invalidatePropertyCache()
     } catch (cacheErr) {
       console.error('Property cache invalidation error (leaveProperty):', cacheErr?.message || cacheErr)
     }
 
-    res.json({ success:true })
+    res.json({ success: true })
+
   } catch (err) {
     next(err)
   }

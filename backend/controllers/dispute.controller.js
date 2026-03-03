@@ -156,43 +156,115 @@ export const createDispute = async (req, res, next) => {
   }
 };
 
+// export const getDisputes = async (req, res, next) => {
+//   try {
+//     const userId = req.user.id;
+//     const role = req.user.role;
+
+//     let query = { isArchived: { $ne: true } };
+
+//     // ADMIN → see all
+//     if (role === 'ADMIN') {
+//       // no extra filter
+//     }
+
+//     // OWNER & TENANT → see disputes where they are involved
+//     if (role === 'OWNER' || role === 'TENANT') {
+//       query.$or = [
+//         { createdBy: userId },
+//         { againstUser: userId }
+//       ];
+//     }
+
+//     const disputes = await Dispute.find(query)
+//       .populate('propertyId', 'address city state')
+//       .populate('createdBy', 'name email role')
+//       .populate('againstUser', 'name email role')
+//       .sort({ createdAt: -1 });
+
+//     res.status(200).json({
+//       success: true,
+//       count: disputes.length,
+//       data: { disputes }
+//     });
+
+//   } catch (err) {
+//     next(err);
+//   }
+// };
+
+
+
 export const getDisputes = async (req, res, next) => {
   try {
-    const userId = req.user.id;
-    const role = req.user.role;
+    const userId = req.user.id
+    const role = req.user.role
 
-    let query = { isArchived: { $ne: true } };
+    let propertyFilter = {}
 
-    // ADMIN → see all
+    // ADMIN sees all
     if (role === 'ADMIN') {
-      // no extra filter
+      const disputes = await Dispute.find({ isArchived: { $ne: true } })
+        .populate('propertyId', 'address city state ownerId tenantId')
+        .populate('createdBy', 'name email role')
+        .populate('againstUser', 'name email role')
+        .sort({ createdAt: -1 })
+
+      return res.json({
+        success: true,
+        count: disputes.length,
+        data: { disputes }
+      })
     }
 
-    // OWNER & TENANT → see disputes where they are involved
-    if (role === 'OWNER' || role === 'TENANT') {
-      query.$or = [
-        { createdBy: userId },
-        { againstUser: userId }
-      ];
+    // OWNER → only properties he owns AND still have tenant
+    if (role === 'OWNER') {
+      propertyFilter = {
+        ownerId: userId,
+        tenantId: { $ne: null } // 🔥 IMPORTANT
+      }
     }
 
-    const disputes = await Dispute.find(query)
+    // TENANT → only properties he is CURRENT tenant of
+    if (role === 'TENANT') {
+      propertyFilter = {
+        tenantId: userId
+      }
+    }
+
+    // Find current active properties
+    const properties = await Property.find(propertyFilter).select('_id')
+    const propertyIds = properties.map(p => p._id)
+
+    // If no active properties → return empty
+    if (propertyIds.length === 0) {
+      return res.json({
+        success: true,
+        count: 0,
+        data: { disputes: [] }
+      })
+    }
+
+    // Now fetch disputes ONLY linked to active properties
+    const disputes = await Dispute.find({
+      propertyId: { $in: propertyIds },
+      isArchived: { $ne: true }
+    })
       .populate('propertyId', 'address city state')
       .populate('createdBy', 'name email role')
       .populate('againstUser', 'name email role')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
 
-    res.status(200).json({
+    res.json({
       success: true,
       count: disputes.length,
       data: { disputes }
-    });
+    })
 
   } catch (err) {
-    next(err);
+    next(err)
   }
-};
-
+}
 
 
 export const getDispute = async (req, res, next) => {
